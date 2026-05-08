@@ -1752,7 +1752,8 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
   late final RestorableTimeOfDay _selectedTime = RestorableTimeOfDay(widget.initialSelectedTime);
   final RestorableBool hourHasError = RestorableBool(false);
   final RestorableBool minuteHasError = RestorableBool(false);
-  Map<String, int>? _cachedNumbers;
+  Map<String, int>? _cachedHours;
+  Map<String, int>? _cachedMinutes;
   Locale? _cachedLocale;
 
   @override
@@ -1760,7 +1761,8 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
     super.didChangeDependencies();
     final Locale locale = Localizations.localeOf(context);
     if (_cachedLocale != locale) {
-      _cachedNumbers = null;
+      _cachedHours = null;
+      _cachedMinutes = null;
       _cachedLocale = locale;
     }
   }
@@ -1788,7 +1790,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
       return null;
     }
 
-    int? newHour = _tryParseLocalizedNumber(value);
+    int? newHour = _tryParseLocalizedHour(value);
     if (newHour == null) {
       return null;
     }
@@ -1814,7 +1816,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
       return null;
     }
 
-    final int? newMinute = _tryParseLocalizedNumber(value);
+    final int? newMinute = _tryParseLocalizedMinute(value);
     if (newMinute == null) {
       return null;
     }
@@ -1825,34 +1827,40 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
     return null;
   }
 
-  int? _tryParseLocalizedNumber(String number) {
-    final int? parsedNumber = int.tryParse(number);
-    if (parsedNumber != null) {
-      return parsedNumber;
+  int? _tryParseLocalizedHour(String hour) {
+    final int? parsedHour = int.tryParse(hour);
+    if (parsedHour != null) {
+      return parsedHour;
     }
 
-    _cachedNumbers ??= _generateLocalizedNumbers();
-
-    return _cachedNumbers![number];
-  }
-
-  Map<String, int> _generateLocalizedNumbers() {
     final MaterialLocalizations localizations = MaterialLocalizations.of(
       context,
     );
 
-    // Supports 0, 1, 2, ..., 59.
-    final numbers = <String, int>{
-      for (int i = 0; i < 60; i++) localizations.formatDecimal(i): i,
+    _cachedHours ??= <String, int>{
+      for (int i = 0; i < 24; i++)
+        localizations.formatHour(TimeOfDay(hour: i, minute: 0)): i,
     };
 
-    // Support 00, 01, 02, ..., 09.
-    final String zero = localizations.formatDecimal(0);
-    for (var i = 0; i < 10; i++) {
-      numbers[zero + localizations.formatDecimal(i)] = i;
+    return _cachedHours![hour];
+  }
+
+  int? _tryParseLocalizedMinute(String minute) {
+    final int? parsedMinute = int.tryParse(minute);
+    if (parsedMinute != null) {
+      return parsedMinute;
     }
 
-    return numbers;
+    final MaterialLocalizations localizations = MaterialLocalizations.of(
+      context,
+    );
+
+    _cachedMinutes ??= <String, int>{
+      for (int i = 0; i < 60; i++)
+        localizations.formatMinute(TimeOfDay(hour: 0, minute: i)): i,
+    };
+
+    return _cachedMinutes![minute];
   }
 
   void _handleHourSavedSubmitted(String? value) {
@@ -1876,7 +1884,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
     final int? newMinute = _parseMinute(value);
     if (newMinute != null) {
       _selectedTime.value = TimeOfDay(
-        hour: _selectedTime.value.hour, 
+        hour: _selectedTime.value.hour,
         minute: newMinute,
       );
       _TimePickerModel.setSelectedTime(context, _selectedTime.value);
