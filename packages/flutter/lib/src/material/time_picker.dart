@@ -1752,7 +1752,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
   late final RestorableTimeOfDay _selectedTime = RestorableTimeOfDay(widget.initialSelectedTime);
   final RestorableBool hourHasError = RestorableBool(false);
   final RestorableBool minuteHasError = RestorableBool(false);
-  Map<String, int>? cachedNumbers;
+  Map<String, int>? _cachedNumbers;
   Locale? _cachedLocale;
 
   @override
@@ -1760,7 +1760,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
     super.didChangeDependencies();
     final Locale locale = Localizations.localeOf(context);
     if (_cachedLocale != locale) {
-      cachedNumbers = null;
+      _cachedNumbers = null;
       _cachedLocale = locale;
     }
   }
@@ -1831,22 +1831,25 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
       return parsedNumber;
     }
 
-    cachedNumbers ??= _generateLocalizedNumbers();
+    _cachedNumbers ??= _generateLocalizedNumbers();
 
-    return cachedNumbers![number];
+    return _cachedNumbers![number];
   }
 
   Map<String, int> _generateLocalizedNumbers() {
+    final MaterialLocalizations localizations = MaterialLocalizations.of(
+      context,
+    );
+
     // Supports 0, 1, 2, ..., 59.
-    final Map<String, int> numbers = {
-      for (var i = 0; i < 60; i++)
-        MaterialLocalizations.of(context).formatDecimal(i): i,
+    final numbers = <String, int>{
+      for (int i = 0; i < 60; i++) localizations.formatDecimal(i): i,
     };
 
     // Support 00, 01, 02, ..., 09.
-    final String zero = numbers.keys.first;
+    final String zero = localizations.formatDecimal(0);
     for (var i = 0; i < 10; i++) {
-      numbers[zero + numbers.keys.elementAt(i)] = i;
+      numbers[zero + localizations.formatDecimal(i)] = i;
     }
 
     return numbers;
@@ -1874,7 +1877,7 @@ class _TimePickerInputState extends State<_TimePickerInput> with RestorationMixi
     if (newMinute != null) {
       _selectedTime.value = TimeOfDay(
         hour: _selectedTime.value.hour, 
-        minute: _tryParseLocalizedNumber(value!)!,
+        minute: newMinute,
       );
       _TimePickerModel.setSelectedTime(context, _selectedTime.value);
       FocusScope.of(context).unfocus();
