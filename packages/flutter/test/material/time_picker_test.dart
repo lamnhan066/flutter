@@ -2094,9 +2094,7 @@ void main() {
         expect(result, equals(const TimeOfDay(hour: 9, minute: 12)));
       });
 
-      testWidgets('parses localized digits in input fields', (
-        WidgetTester tester,
-      ) async {
+      testWidgets('parses localized digits in input fields', (WidgetTester tester) async {
         const localizedDigitLocales = <Locale>[
           Locale('en'),
           Locale('ar'),
@@ -2107,7 +2105,7 @@ void main() {
           Locale('ne'),
           Locale('fr'),
           Locale('de'),
-          Locale('pt')
+          Locale('pt'),
         ];
 
         Future<void> verifyLocale(Locale locale) async {
@@ -2123,9 +2121,7 @@ void main() {
               supportedLocales: <Locale>[const Locale('en'), locale],
               restorationScopeId: 'app',
               locale: locale,
-              theme: ThemeData(
-                useMaterial3: materialType == MaterialType.material3,
-              ),
+              theme: ThemeData(useMaterial3: materialType == MaterialType.material3),
               home: _TimePickerLauncher(
                 onChanged: (TimeOfDay? time) {
                   result = time;
